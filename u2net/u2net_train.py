@@ -24,8 +24,16 @@ from data_loader import SalObjDataset
 from model import U2NET
 from model import U2NETP
 
+import logging
+
+logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 def main():
+
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logging.getLogger().addHandler(console_handler)
     
 # ------- 1. define loss function --------
 
@@ -42,7 +50,7 @@ def main():
         loss6 = bce_loss(d6,labels_v)
 
         loss = loss0 + loss1 + loss2 + loss3 + loss4 + loss5 + loss6
-        print("l0: %3f, l1: %3f, l2: %3f, l3: %3f, l4: %3f, l5: %3f, l6: %3f\n"%(loss0.data.item(),loss1.data.item(),loss2.data.item(),loss3.data.item(),loss4.data.item(),loss5.data.item(),loss6.data.item()))
+        logging.info("l0: %3f, l1: %3f, l2: %3f, l3: %3f, l4: %3f, l5: %3f, l6: %3f\n"%(loss0.data.item(),loss1.data.item(),loss2.data.item(),loss3.data.item(),loss4.data.item(),loss5.data.item(),loss6.data.item()))
 
         return loss0, loss
 
@@ -58,13 +66,13 @@ def main():
     image_ext = '.jpg'
     label_ext = '.jpg'
 
-    print(data_dir)
-    print(tra_image_dir)
-    print(tra_label_dir)
+    logging.info(data_dir)
+    logging.info(tra_image_dir)
+    logging.info(tra_label_dir)
 
     model_dir = os.path.join(os.getcwd(), 'saved_models', model_name + os.sep)
 
-    epoch_num = 500
+    epoch_num = 1000
     batch_size_train = 4
     batch_size_val = 1
     train_num = 0
@@ -84,10 +92,10 @@ def main():
 
         tra_lbl_name_list.append(data_dir + tra_label_dir + imidx + label_ext)
 
-    print("---")
-    print("train images: ", len(tra_img_name_list))
-    print("train labels: ", len(tra_lbl_name_list))
-    print("---")
+    logging.info("---")
+    logging.info("train images: ", len(tra_img_name_list))
+    logging.info("train labels: ", len(tra_lbl_name_list))
+    logging.info("---")
 
     train_num = len(tra_img_name_list)
 
@@ -111,11 +119,11 @@ def main():
         net.cuda()
 
     # ------- 4. define optimizer --------
-    print("---define optimizer...")
+    logging.info("---define optimizer...")
     optimizer = optim.Adam(net.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-08, weight_decay=0)
 
     # ------- 5. training process --------
-    print("---start training...")
+    logging.info("---start training...")
     ite_num = 0
     running_loss = 0.0
     running_tar_loss = 0.0
@@ -158,7 +166,7 @@ def main():
             # del temporary outputs and loss
             del d0, d1, d2, d3, d4, d5, d6, loss2, loss
 
-            print("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f " % (
+            logging.info("[epoch: %3d/%3d, batch: %5d/%5d, ite: %d] train loss: %3f, tar: %3f " % (
             epoch + 1, epoch_num, (i + 1) * batch_size_train, train_num, ite_num, running_loss / ite_num4val, running_tar_loss / ite_num4val))
 
             if ite_num % save_frq == 0:

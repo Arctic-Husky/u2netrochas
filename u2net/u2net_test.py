@@ -54,7 +54,7 @@ def save_output(image_name,pred,d_dir):
 def main():
 
     # --------- 1. get image path and name ---------
-    model_name='u2net_bce_itr_5000_train_0.113068_tar_0.008195'#u2netp
+    model_name='u2net_bce_itr_44936_train_0.174040_tar_0.015851'#u2netp
 
 
 
@@ -78,7 +78,7 @@ def main():
                                         num_workers=1)
 
     # --------- 3. model define ---------
-    if(model_name=='u2net_bce_itr_5000_train_0.113068_tar_0.008195'):
+    if(model_name=='u2net_bce_itr_44936_train_0.174040_tar_0.015851'):
         print("...load U2NET---173.6 MB")
         net = U2NET(3,1)
     elif(model_name=='u2netp'):
