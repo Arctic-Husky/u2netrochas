@@ -72,7 +72,7 @@ def main():
 
     model_dir = os.path.join(os.getcwd(), 'saved_models', model_name + os.sep)
 
-    epoch_num = 1000
+    epoch_num = 500
     batch_size_train = 4
     batch_size_val = 1
     train_num = 0
@@ -128,7 +128,7 @@ def main():
     running_loss = 0.0
     running_tar_loss = 0.0
     ite_num4val = 0
-    save_frq = 8
+    save_frq = 2000
 
     for epoch in range(0, epoch_num):
         net.train()
