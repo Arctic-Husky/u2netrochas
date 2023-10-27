@@ -14,7 +14,7 @@ def load_images_from_folder(folder):
 print("Removendo backgrounds")
 
 images = load_images_from_folder('../test_data/test_images')
-masks = load_images_from_folder('../test_data/u2net_bce_itr_15656_train_0.230484_tar_0.023406_results')
+masks = load_images_from_folder('../test_data/u2net_bce_itr_6000_train_0.112015_tar_0.007777_results')
 
 i = 0
 while i < len(images):
