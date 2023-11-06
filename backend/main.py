@@ -1,10 +1,19 @@
 from typing import Union
 
 from fastapi import FastAPI, UploadFile
+from fastapi.exceptions import HTTPException
+from PIL import Image
+
 from pydantic import BaseModel
 
 import json
-# import uuid
+import uuid
+import io
+import os
+
+import u2net.get_mask ## descobrir como importa diretamente o get_mask
+
+PASTA_IMAGENS_RECEBIDAS = "../imagens_recebidas"
 
 app = FastAPI()
 
@@ -28,8 +37,28 @@ async def read_root():
 
 @app.post("/upload")
 async def upload_file(file: UploadFile):
-    data = json.load(file.file.read())
-    return {"filename": file.filename}
+    if file.content_type != "image/jpeg":
+        raise HTTPException(400, detail="Tipo inválido de arquivo. Formato esperado: jpg")
+    else:
+        # ler o conteudo do post
+        contents = await file.read()
+        # criar um objeto BytesIO e escrever os dados da imagem nele.
+        buffer = io.BytesIO(contents)
+        imagem = Image.open(buffer)
+
+        # cria uma pasta que vai conter a imagem recebida do front para ser usada pelo u2net
+        nomePasta = uuid.uuid4()
+        diretorioNovo = PASTA_IMAGENS_RECEBIDAS + os.sep + str(nomePasta)
+        os.mkdir(diretorioNovo)
+        caminhoDaImagem = diretorioNovo + os.sep + file.filename
+        imagem = imagem.save(caminhoDaImagem)
+
+        caminhoResultado = diretorioNovo + os.sep + 'result'
+        os.mkdir(caminhoResultado)
+
+        u2net.get_mask.makeMask(caminhoDaImagem, caminhoResultado)
+
+        return {"filename": file.filename}
 
 
 # @app.get("/items/{item_id}")

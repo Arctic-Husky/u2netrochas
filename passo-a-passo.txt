@@ -1,0 +1,2 @@
+1- criar virtual environment selecionando todos os arquivos de requirements.txt
+2- 

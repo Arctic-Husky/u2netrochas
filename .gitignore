@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 
 u2net/saved_models/
+imagens_recebidas/
