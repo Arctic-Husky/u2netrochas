@@ -1,49 +1,53 @@
 from typing import Union
-
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, File, status
 from fastapi.exceptions import HTTPException
 from PIL import Image
+from fastapi.responses import Response
+from starlette.middleware.cors import CORSMiddleware
+from secret_settings import *
 
-from pydantic import BaseModel
+from supabase import create_client, Client
 
-import json
+url: str = SUPABASE_URL
+key: str = SUPABASE_KEY
+supabase: Client = create_client(url, key)
+
 import uuid
-import io
+import io as pythonio
 import os
+import shutil
+import base64
 
-import u2net.get_mask ## descobrir como importa diretamente o get_mask
+import sys
+sys.path.append("E:\\Repositorios\\U-2-Net")
+print(sys.path)
+from u2net.u2net_test import *
+from opencv.remove_background import *
 
-PASTA_IMAGENS_RECEBIDAS = "../imagens_recebidas"
+PASTA_IMAGENS_RECEBIDAS = ".."+os.sep+"imagens_recebidas"
+
+pastas_deletar = []
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Union[bool, None] = None
-
-# class Rocha(BaseModel):
-#     id: uuid
-#     nome_arquivo: str
-#     url_arquivo: str
-
-# Banco: Supabase https://supabase.com/dashboard/project/yjdjcvftedrffiiidcyb
-
-
-@app.get("/")
-async def read_root():
-    return {"Hello": "World"}
-
+# TODO: tratamento de imagem corrompida, imagem de texto que foi mudada de .txt para .jpg
 @app.post("/upload")
-async def upload_file(file: UploadFile):
+async def upload_file(file: UploadFile = File(...)):
     if file.content_type != "image/jpeg":
         raise HTTPException(400, detail="Tipo inválido de arquivo. Formato esperado: jpg")
     else:
         # ler o conteudo do post
         contents = await file.read()
         # criar um objeto BytesIO e escrever os dados da imagem nele.
-        buffer = io.BytesIO(contents)
+        buffer = pythonio.BytesIO(contents)
         imagem = Image.open(buffer)
 
         # cria uma pasta que vai conter a imagem recebida do front para ser usada pelo u2net
@@ -51,21 +55,53 @@ async def upload_file(file: UploadFile):
         diretorioNovo = PASTA_IMAGENS_RECEBIDAS + os.sep + str(nomePasta)
         os.mkdir(diretorioNovo)
         caminhoDaImagem = diretorioNovo + os.sep + file.filename
-        imagem = imagem.save(caminhoDaImagem)
+        try:
+            imagem = imagem.save(caminhoDaImagem)
 
-        caminhoResultado = diretorioNovo + os.sep + 'result'
-        os.mkdir(caminhoResultado)
+            caminhoMascara = diretorioNovo + os.sep + 'mask' + os.sep
+            os.mkdir(caminhoMascara)
 
-        u2net.get_mask.makeMask(caminhoDaImagem, caminhoResultado)
+            makeMask(caminhoDaImagem, caminhoMascara)
 
-        return {"filename": file.filename}
+            caminhoResultado = diretorioNovo + os.sep + 'result' + os.sep
+            os.mkdir(caminhoResultado)
+
+            caminhoImagens = diretorioNovo + os.sep
+
+            imagemResultado = removeBackground(pastaImagens=caminhoImagens, pastaMascaras=caminhoMascara, pastaResultados=caminhoResultado, fileName=file.filename)
+
+            with open(imagemResultado, "rb") as image_file:
+                data = base64.b64encode(image_file.read())
+
+            return Response(content=data, media_type="image/png")
+        finally:
+            deletarPasta(diretorioNovo)
+
+@app.get("/catalogo")
+async def get_catalogo(status_code=status.HTTP_200_OK):
+    data, count = supabase.table('CHAPAS').select("*").execute()
+    return data
+
+@app.post("/busca")
+async def get_catalogo_busca(stringDeBusca: str, status_code=status.HTTP_200_OK):
+    data, count = supabase.table('CHAPAS').select("*").like('NOME_ARQUIVO',stringDeBusca).execute()
+    return data
 
 
-# @app.get("/items/{item_id}")
-# async def read_item(item_id: int, q: Union[str, None] = None):
-#     return {"item_id": item_id, "q": q}
+@app.post("/salvar")
+async def salvar_imagem(file: UploadFile = File(...), status_code=status.HTTP_200_OK):
+    # ler o conteudo do post
+    contents = await file.read()
 
+    nomeArquivo = uuid.uuid4()
 
-# @app.put("/items/{item_id}")
-# async def update_item(item_id: int, item: Item):
-#     return {"item_name": item.name, "item_id": item_id}
+    supabase.storage.from_("Imagens").upload(file=contents,path="{}".format(nomeArquivo),file_options={"content-type": "image/png"})
+
+    res = supabase.storage.from_('Imagens').get_public_url('{}'.format(nomeArquivo))
+
+    data, count = supabase.table('CHAPAS').insert({"NOME_ARQUIVO": file.filename, "URL_ARQUIVO": "{}".format(res)}).execute()
+
+    return data
+            
+def deletarPasta(pasta: str):
+    shutil.rmtree(pasta)

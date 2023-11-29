@@ -1,8 +1,7 @@
-import u2net_test as u2test
 import os
+from u2net_test import makeMask
 
-
-def makeMask(imagePath: str, resultsDir: str):
+def doMakeMask(imagePath: str, resultsDir: str):
     """
     Utiliza o u2net_test para produzir a máscara da imagem passada
 
@@ -10,7 +9,7 @@ def makeMask(imagePath: str, resultsDir: str):
     @param
     @param
     """
-    u2test.makeMask(imagePath, resultsDir)
+    makeMask(imagePath, resultsDir)
 
 def getMask(modelName: str, imageName: str) -> str:
     """

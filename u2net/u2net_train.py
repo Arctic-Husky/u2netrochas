@@ -1,6 +1,5 @@
 import os
 import torch
-import torchvision
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
@@ -130,7 +129,6 @@ def main():
     running_loss = 0.0
     running_tar_loss = 0.0
     ite_num4val = 0
-    # save_frq original é 2000, frenquencia de salvamentos em disco dos modelos
     save_frq = 2000
 
     for epoch in range(0, epoch_num):

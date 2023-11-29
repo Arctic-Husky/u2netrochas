@@ -13,13 +13,13 @@ import numpy as np
 from PIL import Image
 import glob
 
-from data_loader import RescaleT
-from data_loader import ToTensor
-from data_loader import ToTensorLab
-from data_loader import SalObjDataset
+from .data_loader import RescaleT
+from .data_loader import ToTensor
+from .data_loader import ToTensorLab
+from .data_loader import SalObjDataset
 
-from model import U2NET # full size version 173.6 MB
-from model import U2NETP # small version u2net 4.7 MB
+from .model import U2NET # full size version 173.6 MB
+from .model import U2NETP # small version u2net 4.7 MB
 
 # normalize the predicted SOD probability map
 def normPRED(d):
@@ -121,17 +121,18 @@ def main():
 def makeMask(imagePath: str, resultsDir: str):
     # --------- 1. get image path and name ---------
 
-    list_of_models = glob.glob(os.getcwd() + os.sep + 'saved_models' + os.sep + 'u2net') # * means all if need specific format then *.csv
-    latest_model = max(list_of_models, key=os.path.getctime)
-    print("Latest model: " + latest_model)
+    # TODO: Utilizar diretório relativo
+    testeCaminho = 'E:'+os.sep+'Repositorios'+os.sep+'U-2-Net'+os.sep+'u2net'+os.sep+'saved_models'+os.sep+'u2net'
 
-    #model_dir = os.path.join(os.getcwd(), 'saved_models', 'u2net', model_name + '.pth')
+    arquivos = [os.path.join(testeCaminho, arquivo) for arquivo in os.listdir(testeCaminho) if os.path.isfile(os.path.join(testeCaminho, arquivo))]
+
+    latest_model = max(arquivos, key=os.path.getctime)
+    print("Latest model: " + latest_model)
 
     img_name_list = glob.glob(imagePath)
     print(img_name_list)
 
     # --------- 2. dataloader ---------
-    #1. dataloader
     test_salobj_dataset = SalObjDataset(img_name_list = img_name_list,
                                         lbl_name_list = [],
                                         transform=transforms.Compose([RescaleT(320),
@@ -175,8 +176,10 @@ def makeMask(imagePath: str, resultsDir: str):
 
         # save results to test_results folder
         if not os.path.exists(resultsDir):
+            print(resultsDir + 'nao existe')
             os.makedirs(resultsDir, exist_ok=True)
         save_output(img_name_list[i_test],pred,resultsDir)
+        print('salvando imagem em: '+ resultsDir)
 
         del d1,d2,d3,d4,d5,d6,d7
 

@@ -1,8 +1,6 @@
 import cv2
 import os
-from pathlib import Path
 
-# opencv loads the image in BGR, convert it to RGB
 def load_images_from_folder(folder):
     images = []
     for filename in os.listdir(folder):
@@ -11,14 +9,27 @@ def load_images_from_folder(folder):
             images.append(img)
     return images
 
-print("Removendo backgrounds")
+def removeBackground(pastaImagens: str, pastaMascaras: str, pastaResultados: str, fileName: str) -> str:
+    print("Removendo backgrounds")
+    images = load_images_from_folder(pastaImagens)
+    masks = load_images_from_folder(pastaMascaras)
 
-images = load_images_from_folder('../test_data/test_images')
-masks = load_images_from_folder('../test_data/u2net_bce_itr_6000_train_0.112015_tar_0.007777_results')
+    imagePath = ""
 
-i = 0
-while i < len(images):
-    final = cv2.bitwise_and(images[i], masks[i])
-    cv2.imwrite("../final_images/image{}.png".format(i), final)
-    i = i + 1
+    i = 0
+    while i < len(images):
+        # Converte a imagem para RGBA
+        alpha_channel = cv2.split(masks[i])[0]
 
+        # Faz o canal alfa ser transparente para pixels pretos (do plano de fundo)
+        alpha_channel[alpha_channel == 0] = 0
+
+        # Adiciona o canal alfa na imagem original
+        images[i] = cv2.merge([images[i], alpha_channel])
+
+
+        head, _, _ = fileName.partition('.')
+        cv2.imwrite(pastaResultados + "/{}.png".format(head), images[i])
+        i = i + 1
+        imagePath = pastaResultados + "/{}.png".format(head)
+    return imagePath
