@@ -6,6 +6,11 @@ from fastapi.responses import Response
 from starlette.middleware.cors import CORSMiddleware
 from secret_settings import *
 
+from pydantic import BaseModel
+
+class Busca(BaseModel):
+    stringBusca: str
+
 from supabase import create_client, Client
 
 url: str = SUPABASE_URL
@@ -79,12 +84,12 @@ async def upload_file(file: UploadFile = File(...)):
 
 @app.get("/catalogo")
 async def get_catalogo(status_code=status.HTTP_200_OK):
-    data, count = supabase.table('CHAPAS').select("*").execute()
+    data, count = supabase.table('CHAPAS').select("*").order('DATA_CRIACAO', desc=True).execute()
     return data
 
 @app.post("/busca")
-async def get_catalogo_busca(stringDeBusca: str, status_code=status.HTTP_200_OK):
-    data, count = supabase.table('CHAPAS').select("*").like('NOME_ARQUIVO',stringDeBusca).execute()
+async def get_catalogo_busca(busca: Busca, status_code=status.HTTP_200_OK):
+    data, count = supabase.table('CHAPAS').select("*").ilike('NOME_ARQUIVO',busca.stringBusca).order('DATA_CRIACAO', desc=True).execute()
     return data
 
 
