@@ -16,6 +16,10 @@ Este projeto...
 - Na pasta root do projeto, acessar /u2net
 - Dentro de u2net, executar: "pip install -r requirements.txt"
 
+- Baixar imagens de treinamento
+- Baixar imagens de teste
+- Baixar modelo pronto
+
 
 ### Treinamento do Modelo (u2net)
 - 
